@@ -1,0 +1,440 @@
+# Aut<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CRM Lite — Vía Pública</title>
+  <style>
+    :root{
+      --bg:#0b0c10; --panel:#111318; --ink:#eaf0f5; --muted:#a9b4c2; --acc:#5dd39e; --acc2:#6ab0ff; --danger:#ff6b6b;
+      --bord:#1e2230; --chip:#171a22; --input:#0f1117;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(180deg,#0b0c10,#0e1117);color:var(--ink);font:15px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial}
+    header{position:sticky;top:0;background:rgba(11,12,16,.7);backdrop-filter:blur(6px);z-index:9;border-bottom:1px solid var(--bord)}
+    .bar{display:flex;gap:10px;align-items:center;padding:10px 14px;max-width:1200px;margin:auto}
+    .title{font-weight:700;letter-spacing:.3px}
+    .pill{padding:6px 10px;border:1px solid var(--bord);background:var(--chip);border-radius:999px;color:var(--muted)}
+    main{max-width:1200px;margin:20px auto;padding:0 14px;display:grid;grid-template-columns:380px 1fr;gap:16px}
+    @media (max-width: 980px){main{grid-template-columns:1fr}}
+
+    .card{background:var(--panel);border:1px solid var(--bord);border-radius:16px;padding:12px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+    h2{margin:6px 6px 10px;font-size:16px;color:var(--muted);font-weight:700}
+
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .grid-3{grid-template-columns:1fr 1fr 1fr}
+    .grid-1{grid-template-columns:1fr}
+    label{font-size:12px;color:var(--muted);display:block;margin:8px 4px 4px}
+    input, select, textarea{width:100%;padding:9px 10px;border-radius:10px;border:1px solid var(--bord);background:var(--input);color:var(--ink)}
+    textarea{min-height:72px;resize:vertical}
+
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    button{border:1px solid var(--bord);background:#121826;color:var(--ink);padding:8px 12px;border-radius:10px;cursor:pointer}
+    button.primary{background:linear-gradient(180deg,var(--acc),#33b981);color:#041a12;font-weight:700}
+    button.ghost{background:transparent}
+    button.danger{background:linear-gradient(180deg,#ffb0b0,var(--danger));color:#2b0a0a;font-weight:700}
+    button:disabled{opacity:.5;cursor:not-allowed}
+
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+    .toolbar .spacer{flex:1}
+
+    table{width:100%;border-collapse:separate;border-spacing:0 8px}
+    thead th{font-size:12px;color:var(--muted);text-align:left;padding:0 8px}
+    tbody tr{background:var(--chip);border:1px solid var(--bord)}
+    tbody td{padding:10px 8px;vertical-align:top;border-top:1px solid var(--bord);border-bottom:1px solid var(--bord)}
+    tbody tr td:first-child{border-left:1px solid var(--bord);border-radius:10px 0 0 10px}
+    tbody tr td:last-child{border-right:1px solid var(--bord);border-radius:0 10px 10px 0}
+    .tag{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--bord);background:#0f1320;color:var(--acc2);font-size:12px}
+    .small{font-size:12px;color:var(--muted)}
+    .nowrap{white-space:nowrap}
+    .num{text-align:right}
+    .row-actions{display:flex;gap:6px}
+    .highlight{background:#0f1a12;border-color:#123d2a}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <div class="title">📊 CRM Lite — Vía Pública</div>
+      <span class="pill" id="leadCount">0 leads</span>
+      <span class="pill" id="todayBadge"></span>
+      <div class="spacer"></div>
+      <input id="search" placeholder="Buscar empresa, contacto, zona, notas…" />
+      <button id="exportCsv">Exportar CSV</button>
+      <label class="pill" style="cursor:pointer">Importar CSV
+        <input id="importCsv" type="file" accept=".csv" style="display:none" />
+      </label>
+      <button class="danger" id="wipe">Reset local</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Formulario -->
+    <section class="card" id="formCard">
+      <h2>➕ Nuevo lead / editar</h2>
+      <div class="grid">
+        <div>
+          <label>Owner (vendedor)</label>
+          <input id="owner" placeholder="Manuel" />
+        </div>
+        <div>
+          <label>Stage</label>
+          <select id="stage">
+            <option>Nuevo</option>
+            <option>Contactado</option>
+            <option>Interesado</option>
+            <option>Cotizado</option>
+            <option>En Negociación</option>
+            <option>Ganado</option>
+            <option>Perdido</option>
+            <option>No califica</option>
+            <option>Follow-up futuro</option>
+          </select>
+        </div>
+        <div>
+          <label>Empresa</label>
+          <input id="company" />
+        </div>
+        <div>
+          <label>Contacto</label>
+          <input id="contact" />
+        </div>
+        <div>
+          <label>Rol</label>
+          <input id="role" />
+        </div>
+        <div>
+          <label>Teléfono</label>
+          <input id="phone" />
+        </div>
+        <div>
+          <label>Email</label>
+          <input id="email" />
+        </div>
+        <div>
+          <label>Source</label>
+          <select id="source">
+            <option>Visita en zona</option>
+            <option>Llamada en frío</option>
+            <option>Email inbound</option>
+            <option>Contacto referido</option>
+            <option>Evento/Feria</option>
+            <option>Otro</option>
+          </select>
+        </div>
+        <div>
+          <label>Segment</label>
+          <input id="segment" placeholder="Salud, Retail, Belleza…" />
+        </div>
+        <div>
+          <label>Rubro</label>
+          <input id="rubro" placeholder="Hospital, Ferretería…" />
+        </div>
+        <div>
+          <label>Ciudad</label>
+          <input id="city" placeholder="CABA, Vicente López…" />
+        </div>
+        <div>
+          <label>Dirección</label>
+          <input id="address" />
+        </div>
+        <div>
+          <label>Zona / Corredor</label>
+          <input id="zone" placeholder="Panamericana, Libertador, Santa Fe…" />
+        </div>
+        <div>
+          <label>Formatos de interés</label>
+          <input id="formats" placeholder="LED, Columna, Medianera…" />
+        </div>
+        <div>
+          <label>Score (0-100)</label>
+          <input id="score" type="number" min="0" max="100" />
+        </div>
+        <div>
+          <label>Potencial mensual (ARS)</label>
+          <input id="potential" type="number" min="0" step="1" />
+        </div>
+        <div>
+          <label>Forecast close date</label>
+          <input id="forecast" type="date" />
+        </div>
+        <div>
+          <label>Próximo paso</label>
+          <input id="nextStep" />
+        </div>
+        <div>
+          <label>Fecha próximo paso</label>
+          <input id="nextDate" type="date" />
+        </div>
+        <div>
+          <label>GeoLat</label>
+          <input id="lat" type="number" step="0.000001" />
+        </div>
+        <div>
+          <label>GeoLng</label>
+          <input id="lng" type="number" step="0.000001" />
+        </div>
+        <div class="grid-1">
+          <label>Notas</label>
+          <textarea id="notes" placeholder="Detalles de la conversación, objeciones, necesidad de formatos…"></textarea>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="primary" id="save">Guardar</button>
+        <button class="ghost" id="clear">Limpiar</button>
+        <button id="today">Hoy + Recordatorio</button>
+      </div>
+      <div class="small" id="status"></div>
+    </section>
+
+    <!-- Lista / filtros -->
+    <section class="card">
+      <h2>📋 Leads</h2>
+      <div class="toolbar">
+        <select id="filterOwner"><option value="">Owner: todos</option></select>
+        <select id="filterStage">
+          <option value="">Stage: todos</option>
+          <option>Nuevo</option><option>Contactado</option><option>Interesado</option><option>Cotizado</option>
+          <option>En Negociación</option><option>Ganado</option><option>Perdido</option><option>No califica</option><option>Follow-up futuro</option>
+        </select>
+        <select id="sortBy">
+          <option value="nextDate">Ordenar: Próximo paso</option>
+          <option value="score">Ordenar: Score</option>
+          <option value="potential">Ordenar: Potencial</option>
+          <option value="company">Ordenar: Empresa</option>
+        </select>
+        <div class="spacer"></div>
+        <button id="sampleData">Cargar ejemplos</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Empresa / Contacto</th>
+            <th>Owner</th>
+            <th>Stage</th>
+            <th class="nowrap">Próximo paso</th>
+            <th class="nowrap">Fecha</th>
+            <th class="num">Score</th>
+            <th class="num">Potencial</th>
+            <th>Zona</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    const $ = s=>document.querySelector(s);
+    const $$ = s=>Array.from(document.querySelectorAll(s));
+    const storeKey = 'crmLeads_v1';
+    let editId = null; // id del lead en edición
+
+    function uid(){return 'L' + Math.random().toString(36).slice(2,10)}
+    function today(){return new Date().toISOString().slice(0,10)}
+
+    function load(){
+      try{ return JSON.parse(localStorage.getItem(storeKey) || '[]'); }
+      catch(e){ return [] }
+    }
+    function saveAll(list){ localStorage.setItem(storeKey, JSON.stringify(list)); }
+
+    function readForm(){
+      return {
+        id: editId || uid(),
+        createdAt: new Date().toISOString(),
+        owner: $('#owner').value.trim(),
+        stage: $('#stage').value,
+        company: $('#company').value.trim(),
+        contact: $('#contact').value.trim(),
+        role: $('#role').value.trim(),
+        phone: $('#phone').value.trim(),
+        email: $('#email').value.trim(),
+        source: $('#source').value,
+        segment: $('#segment').value.trim(),
+        rubro: $('#rubro').value.trim(),
+        city: $('#city').value.trim(),
+        address: $('#address').value.trim(),
+        zone: $('#zone').value.trim(),
+        formats: $('#formats').value.trim(),
+        score: parseInt($('#score').value||0,10),
+        potential: parseInt($('#potential').value||0,10),
+        forecast: $('#forecast').value,
+        nextStep: $('#nextStep').value.trim(),
+        nextDate: $('#nextDate').value,
+        lat: $('#lat').value, lng: $('#lng').value,
+        notes: $('#notes').value.trim()
+      }
+    }
+    function fillForm(l){
+      editId = l.id;
+      $('#owner').value=l.owner||''; $('#stage').value=l.stage||'Nuevo'; $('#company').value=l.company||''; $('#contact').value=l.contact||'';
+      $('#role').value=l.role||''; $('#phone').value=l.phone||''; $('#email').value=l.email||''; $('#source').value=l.source||'Visita en zona';
+      $('#segment').value=l.segment||''; $('#rubro').value=l.rubro||''; $('#city').value=l.city||''; $('#address').value=l.address||'';
+      $('#zone').value=l.zone||''; $('#formats').value=l.formats||''; $('#score').value=l.score||0; $('#potential').value=l.potential||0;
+      $('#forecast').value=l.forecast||''; $('#nextStep').value=l.nextStep||''; $('#nextDate').value=l.nextDate||''; $('#lat').value=l.lat||''; $('#lng').value=l.lng||''; $('#notes').value=l.notes||'';
+      $('#status').textContent = 'Editando ' + l.company + ' (' + l.stage + ')';
+    }
+    function clearForm(){ editId=null; $$('input, textarea').forEach(el=>{if(el.type!=='file'&&el.id!=='search') el.value=''}); $('#stage').value='Nuevo'; $('#source').value='Visita en zona'; $('#status').textContent=''; }
+
+    function render(){
+      const list = load();
+      const q = $('#search').value.toLowerCase();
+      const fOwner = $('#filterOwner').value;
+      const fStage = $('#filterStage').value;
+      const sortBy = $('#sortBy').value;
+
+      let out = list.filter(l=>{
+        const hit = (l.company+" "+l.contact+" "+l.zone+" "+(l.notes||'')).toLowerCase().includes(q);
+        const ownerOk = !fOwner || l.owner===fOwner;
+        const stageOk = !fStage || l.stage===fStage;
+        return hit && ownerOk && stageOk;
+      });
+
+      out.sort((a,b)=>{
+        if(sortBy==='score') return (b.score||0)-(a.score||0);
+        if(sortBy==='potential') return (b.potential||0)-(a.potential||0);
+        if(sortBy==='company') return (a.company||'').localeCompare(b.company||'');
+        // nextDate default
+        return (a.nextDate||'9999-12-31').localeCompare(b.nextDate||'9999-12-31');
+      });
+
+      const rows = out.map(l=>{
+        const maps = l.lat&&l.lng ? `https://maps.google.com/?q=${l.lat},${l.lng}` : (l.address?`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(l.address)}`:'');
+        const nextSoon = l.nextDate && l.nextDate<=today();
+        return `<tr class="${nextSoon?'highlight':''}">
+          <td>
+            <div><strong>${l.company||'-'}</strong> <span class="small">— ${l.contact||''}</span></div>
+            <div class="small">${l.segment||''} • ${l.rubro||''} • ${l.city||''}</div>
+            <div class="small">${(l.notes||'').slice(0,120)}</div>
+          </td>
+          <td>${l.owner||''}</td>
+          <td><span class="tag">${l.stage||'Nuevo'}</span></td>
+          <td>${l.nextStep||''}</td>
+          <td class="nowrap">${l.nextDate||''}</td>
+          <td class="num">${l.score||0}</td>
+          <td class="num">${(l.potential||0).toLocaleString('es-AR')}</td>
+          <td>${l.zone||''}</td>
+          <td>
+            <div class="row-actions">
+              <button onclick='app.edit("${l.id}")'>Editar</button>
+              <button onclick='app.dup("${l.id}")'>Duplicar</button>
+              ${maps?`<a href="${maps}" target="_blank"><button>Mapa</button></a>`:''}
+              <button class="danger" onclick='app.del("${l.id}")'>Borrar</button>
+            </div>
+          </td>
+        </tr>`
+      }).join('');
+      $('#rows').innerHTML = rows || `<tr><td colspan="9" class="small">Sin leads cargados. Usá "Cargar ejemplos" o creá uno nuevo.</td></tr>`;
+
+      // filtros dinámicos
+      const owners = [...new Set(list.map(l=>l.owner).filter(Boolean))];
+      $('#filterOwner').innerHTML = '<option value="">Owner: todos</option>' + owners.map(o=>`<option ${o===fOwner?'selected':''}>${o}</option>`).join('');
+      $('#leadCount').textContent = list.length + ' leads';
+      $('#todayBadge').textContent = 'Hoy: ' + today();
+    }
+
+    function upsert(lead){
+      const list = load();
+      const i = list.findIndex(x=>x.id===lead.id);
+      if(i>=0) list[i] = {...list[i], ...lead}; else list.push(lead);
+      saveAll(list); render();
+    }
+
+    function del(id){ const list = load().filter(x=>x.id!==id); saveAll(list); render(); if(editId===id) clearForm(); }
+    function edit(id){ const l = load().find(x=>x.id===id); if(l) fillForm(l); }
+    function dup(id){ const l = load().find(x=>x.id===id); if(!l) return; const c={...l,id:uid(),company:l.company+" (copy)",createdAt:new Date().toISOString()}; upsert(c); }
+
+    // CSV helpers
+    function toCsv(list){
+      const cols = ["id","createdAt","owner","company","contact","role","phone","email","source","segment","rubro","city","address","lat","lng","formats","zone","stage","score","potential","forecast","nextStep","nextDate","notes"];
+      const head = cols.join(',');
+      const body = list.map(l=>cols.map(k=>`"${String(l[k]??'').replaceAll('"','""')}"`).join(',')).join('\n');
+      return head+'\n'+body;
+    }
+    function download(name, text){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'text/csv'})); a.download=name; a.click(); }
+
+    function parseCsv(text){
+      // mini parser simple para CSV con comillas; asume columnas conocidas
+      const lines = text.split(/\r?\n/).filter(Boolean);
+      const header = lines.shift().split(',').map(h=>h.replace(/^"|"$/g,''));
+      const idx = k=>header.indexOf(k);
+      const get=(arr,k)=>arr[idx(k)]||'';
+      const out=[];
+      for(const line of lines){
+        // dividir respetando comillas
+        const cells=[]; let cur=''; let inQ=false;
+        for(let i=0;i<line.length;i++){
+          const ch=line[i];
+          if(ch==='"'){ if(inQ && line[i+1]==='"'){cur+='"'; i++;} else {inQ=!inQ;} }
+          else if(ch===',' && !inQ){ cells.push(cur); cur=''; }
+          else cur+=ch;
+        }
+        cells.push(cur);
+        const val = k=> (cells[idx(k)]||'').replace(/^"|"$/g,'');
+        out.push({
+          id: val('LeadID')||val('id')||uid(),
+          createdAt: val('CreatedAt')||val('createdAt')||new Date().toISOString(),
+          owner: val('Owner')||val('owner'),
+          company: val('CompanyName')||val('company'),
+          contact: val('ContactName')||val('contact'),
+          role: val('Role')||val('role'),
+          phone: val('Phone')||val('phone'),
+          email: val('Email')||val('email'),
+          source: val('Source')||val('source'),
+          segment: val('Segment')||val('segment'),
+          rubro: val('Rubro')||val('rubro'),
+          city: val('City')||val('city'),
+          address: val('Address')||val('address'),
+          lat: val('GeoLat')||val('lat'),
+          lng: val('GeoLng')||val('lng'),
+          formats: val('InterestFormats')||val('formats'),
+          zone: val('Corridor/Zone')||val('zone'),
+          stage: val('Stage')||val('stage')||'Nuevo',
+          score: parseInt(val('Score(0-100)')||val('score')||'0',10),
+          potential: parseInt(val('PotentialMonthlyAR(ARS)')||val('potential')||'0',10),
+          forecast: val('ForecastCloseDate')||val('forecast'),
+          nextStep: val('NextStep')||val('nextStep'),
+          nextDate: val('NextActionDate')||val('nextDate'),
+          notes: val('Notes')||val('notes')
+        });
+      }
+      return out;
+    }
+
+    // App namespace para acciones desde HTML
+    window.app = { edit, del, dup };
+
+    // Events
+    $('#save').onclick = ()=>{ const l=readForm(); if(!l.company){alert('Empresa es obligatorio'); return} upsert(l); clearForm(); $('#status').textContent='Guardado ✔'; };
+    $('#clear').onclick = ()=> clearForm();
+    $('#today').onclick = ()=>{ $('#nextDate').value = today(); $('#status').textContent='Próximo paso seteado para hoy'; };
+    $('#search').oninput = render;
+    $('#filterOwner').onchange = render; $('#filterStage').onchange = render; $('#sortBy').onchange = render;
+
+    $('#exportCsv').onclick = ()=>{ download('crm_leads_export.csv', toCsv(load())); };
+    $('#importCsv').onchange = (e)=>{
+      const f=e.target.files[0]; if(!f) return; const r=new FileReader();
+      r.onload=()=>{ const incoming=parseCsv(r.result); const cur=load(); saveAll([...cur, ...incoming]); render(); alert('Importado '+incoming.length+' leads'); };
+      r.readAsText(f);
+    };
+    $('#wipe').onclick = ()=>{ if(confirm('¿Borrar datos locales?')){ localStorage.removeItem(storeKey); render(); clearForm(); }};
+
+    $('#sampleData').onclick = ()=>{
+      const samples = [
+        {id:uid(), createdAt:new Date().toISOString(), owner:'Manuel', stage:'Interesado', company:'Hospital Alemán', contact:'Carina Pöltl', role:'Mktg', phone:'+54 11 5555-1111', email:'carina@hospitalaleman.org', source:'Visita en zona', segment:'Salud', rubro:'Hospital', city:'CABA', address:'Av. Pueyrredón 1640', zone:'Recoleta', formats:'LED, Columna', score:68, potential:1200000, forecast:today(), nextStep:'Enviar propuesta con mapa y tarifas', nextDate:today(), notes:'Priorizar LED cerca de hospitales'},
+        {id:uid(), createdAt:new Date().toISOString(), owner:'Agustín', stage:'Contactado', company:'Buttman', contact:'Rodrigo S.', role:'Dueño', phone:'+54 11 5555-2222', email:'ventas@buttman.com', source:'Llamada en frío', segment:'Retail', rubro:'Ferretería', city:'CABA', address:'Av. Corrientes 2021', zone:'Corrientes Centro', formats:'Columna', score:45, potential:800000, forecast:'', nextStep:'WhatsApp con 12 ubicaciones', nextDate:today(), notes:'Opciones por cercanía a sucursales'},
+        {id:uid(), createdAt:new Date().toISOString(), owner:'Lucía', stage:'Cotizado', company:'Eximia', contact:'María L.', role:'Brand Manager', phone:'+54 11 5555-3333', email:'maria@eximia.com', source:'Contacto referido', segment:'Belleza', rubro:'Cosmética', city:'Vicente López', address:'Av. del Libertador 1200', zone:'Zona Norte', formats:'LED, Medianera', score:76, potential:2200000, forecast:'', nextStep:'Follow-up de presupuesto', nextDate:'', notes:'Interesadas en verano y cercanía a shoppings'}
+      ];
+      const cur = load(); saveAll([...cur, ...samples]); render();
+    };
+
+    // init
+    render();
+  </script>
+</body>
+</html>
+o detect text files and perform LF normalization
+* text=auto
